@@ -15,32 +15,37 @@ async fn main() -> Result<()> {
         let (mut tcp_stream, addr) = listener.accept().await?;
         println!("client: {} connected", addr);
 
-        tokio::spawn(async move {
-            let _ = tcp_stream.readable().await;
+        let _ = tcp_stream.readable().await;
 
-            let mut buf = [0; 4096];
-            match tcp_stream.try_read(&mut buf) {
-                Ok(0) => {}
-                Ok(n) => {
-                    println!("read {} bytes", n);
-                    let data = Bytes::copy_from_slice(&buf[0..n]);
-                    let req_data = mypb::CommondRequest::decode(data);
-                    match req_data {
-                        Ok(req) => {
-                            println!("decode cmd: {:?}", req);
-                            let _ = tcp_stream.write_all(b"Received data").await;
+        tokio::spawn(async move {
+            loop {
+                let mut buf = [0; 4096];
+                match tcp_stream.try_read(&mut buf) {
+                    Ok(0) => {
+                        continue;
+                    }
+
+                    Ok(n) => {
+                        println!("read {} bytes", n);
+                        let data = Bytes::copy_from_slice(&buf[0..n]);
+                        let req_data = mypb::CommondRequest::decode(data);
+                        match req_data {
+                            Ok(req) => {
+                                println!("decode cmd: {:?}", req);
+                                let _ = tcp_stream.write_all(b"Received data").await;
+                            }
+                            Err(e) => {
+                                println!("failed to decode request: {}", e);
+                            }
                         }
-                        Err(e) => {
-                            println!("failed to decode request: {}", e);
-                        }
+                        continue;
+                    }
+                    Err(ref e) => {
+                        println!("read data err: {}", e);
+                        continue;
                     }
                 }
-                Err(ref e) => {
-                    println!("read data err: {}", e);
-                }
             }
-
-            println!("client disconnected: {}", addr);
         });
     }
 }

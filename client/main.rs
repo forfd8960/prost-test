@@ -12,19 +12,23 @@ async fn main() -> Result<()> {
     let addr = "127.0.0.1:8989";
     let mut stream = TcpStream::connect(addr).await?;
 
+    let mut cmds: Vec<Vec<u8>> = vec![];
+
     let get_cmd = encode_get_cmd();
-    stream.write_all(&get_cmd).await?;
-    stream.flush().await?;
-    println!("done write cmd: {:?}", get_cmd);
+    cmds.push(get_cmd);
 
-    // let set_cmd = encode_set_cmd();
-    // stream.write_all(&set_cmd).await?;
-    // println!("done write cmd: {:?}", set_cmd);
+    let set_cmd = encode_set_cmd();
+    cmds.push(set_cmd);
 
-    let mut data = BytesMut::with_capacity(4096);
-    stream.read_buf(&mut data).await?;
+    for data in cmds {
+        stream.write_all(&data).await.unwrap();
+        println!("done write cmd: {:?}", data);
 
-    println!("read response: {:?}", String::from_utf8(data.to_vec()));
+        let mut resp = BytesMut::with_capacity(4096);
+        stream.read_buf(&mut resp).await.unwrap();
+        println!("read response: {:?}", String::from_utf8(resp.to_vec()));
+    }
+
     Ok(())
 }
 
