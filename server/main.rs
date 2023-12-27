@@ -1,11 +1,9 @@
-mod pb;
-
 use anyhow::Result;
 use bytes::Bytes;
 use prost::Message;
 use tokio::net::TcpListener;
 
-use crate::pb::pb as mypb;
+use prost_test::pb::pb as mypb;
 
 #[tokio::main]
 async fn main() -> Result<()> {

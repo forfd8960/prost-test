@@ -24,3 +24,13 @@ tokio = { version = "1.35.1", features = [
 
 [build-dependencies]
 prost-build = "0.12.3"
+
+
+[[bin]]
+name = "client"
+path = "client/main.rs"
+
+
+[[bin]]
+name = "server"
+path = "server/main.rs"
