@@ -1,18 +1,18 @@
 use anyhow::Result;
 use bytes::Bytes;
 use prost::Message;
-use tokio::net::TcpListener;
+use tokio::{io::AsyncWriteExt, net::TcpListener};
 
 use prost_test::pb::pb as mypb;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let addr = "127.0.0.1:8989";
+    let addr: &str = "127.0.0.1:8989";
     let listener = TcpListener::bind(addr).await?;
     println!("start listen on: {}", addr);
 
     loop {
-        let (tcp_stream, addr) = listener.accept().await?;
+        let (mut tcp_stream, addr) = listener.accept().await?;
         println!("client: {} connected", addr);
 
         tokio::spawn(async move {
@@ -28,6 +28,7 @@ async fn main() -> Result<()> {
                     match req_data {
                         Ok(req) => {
                             println!("decode cmd: {:?}", req);
+                            let _ = tcp_stream.write_all(b"Received data").await;
                         }
                         Err(e) => {
                             println!("failed to decode request: {}", e);
